@@ -3,9 +3,9 @@ from typing import Any, Dict
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
+from app.services.llm_analysis import LLMAnalysisService
 from app.services.llm_service import LLMService
 from app.services.pocketbase_service import PocketbaseService
-from app.services.llm_analysis import LLMAnalysisService
 
 router = APIRouter()
 pocketbase_service = PocketbaseService()
@@ -44,9 +44,9 @@ async def handle_query(request: QueryRequest):
 
         # Save the query to Pocketbase with both raw and processed responses
         record_id = await pocketbase_service.save_query(
-            question=request.question, 
+            question=request.question,
             responses=llm_responses,
-            processed_responses=processed_responses
+            processed_responses=processed_responses,
         )
 
         return QueryResponse(

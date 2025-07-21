@@ -10,7 +10,12 @@ class PocketbaseService:
         self.pocketbase_url = config('POCKETBASE_URL')
         self.client = PocketBase(self.pocketbase_url)
 
-    async def save_query(self, question: str, responses: Dict[str, Any], processed_responses: Optional[Dict[str, Any]] = None) -> Optional[str]:
+    async def save_query(
+        self,
+        question: str,
+        responses: Dict[str, Any],
+        processed_responses: Optional[Dict[str, Any]] = None,
+    ) -> Optional[str]:
         """Save a new query and its LLM responses to Pocketbase.
 
         Args:
@@ -28,7 +33,7 @@ class PocketbaseService:
                 'question': question,
                 'responses': json.dumps(responses),  # Convert dict to JSON string
             }
-            
+
             # Add processed responses if provided
             if processed_responses:
                 data['processed_responses'] = json.dumps(processed_responses)

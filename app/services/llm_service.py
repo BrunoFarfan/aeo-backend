@@ -25,7 +25,7 @@ class LLMService:
         self.perplexity_api_key = config('PERPLEXITY_API_KEY', default=None)
 
         # Initialize search tool
-        self.search_tool = DuckDuckGoSearchResults(output_format="list")
+        self.search_tool = DuckDuckGoSearchResults(output_format='list')
 
         # Model configurations
         self.model_configs = {
