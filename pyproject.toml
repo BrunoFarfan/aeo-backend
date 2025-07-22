@@ -14,7 +14,8 @@ dependencies = [
     "pocketbase (>=0.15.0,<0.16.0)",
     "python-decouple (>=3.8,<4.0)",
     "langchain-community (>=0.3.27,<0.4.0)",
-    "duckduckgo-search (>=8.1.1,<9.0.0)"
+    "duckduckgo-search (>=8.1.1,<9.0.0)",
+    "langchain-openai (>=0.3.28,<0.4.0)",
 ]
 
 

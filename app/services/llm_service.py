@@ -89,20 +89,38 @@ class LLMService:
                 llm=llm,
                 verbose=True,
                 handle_parsing_errors=True,
+                max_iterations=10,
+                max_execution_time=60,
+                early_stopping_method="generate",
             )
 
             # Get response with search
             response = await asyncio.to_thread(
                 agent.run,
-                f'Please search the web and provide a helpful and informative response to this '
-                f'question: {question}. Your answer must be presented as a ranked list or '
-                'leaderboard. Each entry must have URL/links to ALL the web pages where it is '
-                'mentioned, and your opinion about each entry.',
+                f'Please search the web and provide a comprehensive list of recommendations for this '
+                f'question: {question}. Your response must be structured as follows:\n\n'
+                '1. **Ranked List**: Present your answer as a numbered list, ordered from best to worst fit '
+                'for the question asked.\n\n'
+                '2. **For Each Entry Include**:\n'
+                '   - The exact name of the place/brand/company/service\n'
+                '   - A brief description (2-3 sentences) explaining why it\'s recommended\n'
+                '   - Key features, benefits, or characteristics that make it stand out\n'
+                '   - Any relevant ratings, reviews, or reputation information\n\n'
+                '3. **Source URLs**: For each recommendation, provide 2-3 specific source URLs from '
+                'external websites (reviews, articles, guides, comparison sites) that discuss and evaluate '
+                'these specific places/brands/companies. Do NOT just link to the company\'s own website.\n\n'
+                '4. **Comprehensive Coverage**: Aim to provide at least 8-12 different options to give '
+                'users a wide range of choices.\n\n'
+                '5. **Local Focus**: When the question mentions a specific location (like "in Chile" or "in Santiago"), '
+                'prioritize local options and businesses that operate in that area.\n\n'
+                'Format your response clearly with proper headings, bullet points, and organized information '
+                'that makes it easy for users to compare and choose the best option for their needs.',
             )
 
             return response
 
-        except Exception:
+        except Exception as e:
+            print(f"Error with {model_name}: {str(e)}")
             return config['fallback'](question)
 
     # Convenience methods for backward compatibility

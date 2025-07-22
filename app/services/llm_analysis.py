@@ -36,25 +36,14 @@ class LLMAnalysisService:
             [f'**{model.upper()}**: {response}' for model, response in responses.items()]
         )
 
-        # Create dynamic JSON structure based on available models
-        model_structure = {}
-        for model in responses.keys():
-            model_structure[model] = [
-                {'brand': 'Brand Name', 'position': 1, 'sentiment': 0.5, 'contains_link': 0}
-            ]
-
-        prompt = f"""
-Please analyze the following LLM responses and extract ONLY the brands that are being compared or ranked in the context of the question. For each brand mention, provide:
+        return f"""
+Please analyze the following LLM responses and extract ONLY the brands that are being compared or ranked in the context of the answer. For each brand mention, provide:
 
 1. **brand**: The exact brand name as mentioned
 2. **position**: The order in which it appears in the text (1 for first mention, 2 for second, etc.)
-3. **sentiment**: A score from -1 (worst) to 1 (best)
-4. **contains_link**: Number of URLs/links found in the reference to that specific entry
+3. **sentiment**: A score from -1 (worst) to 1 (best) on the valuation the answer gives on the entry
+4. **link_count**: Number of URLs/links found in the reference to that specific entry
 CRITICAL INSTRUCTIONS FOR BRAND EXTRACTION:
-- Extract ONLY brands that are being compared, ranked, or evaluated in the context of the question
-- If the question is about "best cars", extract only car brands, NOT tire brands, oil brands, etc.
-- If the question is about "best restaurants", extract only restaurant names, NOT food delivery services, review sites, etc.
-- If the question is about "best phones", extract only phone brands, NOT case manufacturers, screen protectors, etc.
 - Focus on the PRIMARY category being compared/ranked
 - Ignore secondary or supporting brands that are not part of the main comparison
 - Only include brands that are explicitly mentioned as options, recommendations, or alternatives
@@ -67,11 +56,9 @@ Important guidelines:
 - Extract ONLY relevant brands for the comparison being made
 - Maintain the exact order of appearance for position
 - Be conservative with sentiment scoring - default to 0.0 if unclear
-- Count actual URLs (http/https) for contains_link
+- Count actual URLs (http/https) for link_count
 - If no relevant brands are found for a model, return an empty array
 """
-
-        return prompt
 
     def _create_dynamic_model(self, model_names: list[str]) -> type:
         """Dynamically create a Pydantic model based on available model names."""
