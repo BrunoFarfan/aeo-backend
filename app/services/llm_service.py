@@ -90,7 +90,7 @@ class LLMService:
                 verbose=True,
                 handle_parsing_errors=True,
                 max_iterations=10,
-                max_execution_time=60,
+                max_execution_time=120,
                 early_stopping_method="generate",
             )
 

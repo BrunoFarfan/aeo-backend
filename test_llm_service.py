@@ -17,7 +17,7 @@ async def test_llm_service():
     """Test the LLM service."""
     service = LLMService()
 
-    test_question = 'What is machine learning?'
+    test_question = 'Como cotizar un seguro vehicular en Chile?'
 
     print('🧪 Testing LLM service...')
     print(f'📝 Question: {test_question}')

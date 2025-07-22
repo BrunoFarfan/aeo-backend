@@ -24,7 +24,7 @@ async def test_complete_flow():
     pocketbase_service = PocketbaseService()
 
     test_question = (
-        'Cuales son las mejores empresas de abogadoes en Chile para defenderse de las deudas?'
+        'Como cotizar un seguro vehicular en Chile?'
     )
 
     print('🧪 Testing Complete Flow with Analysis...')
