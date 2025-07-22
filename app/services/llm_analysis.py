@@ -71,7 +71,9 @@ Pautas importantes:
         for model_name in model_names:
             fields[model_name] = (
                 list[BrandMention],
-                Field(description=f"Menciones de marcas encontradas en la respuesta de {model_name}"),
+                Field(
+                    description=f'Menciones de marcas encontradas en la respuesta de {model_name}'
+                ),
             )
 
         # Create the dynamic model
@@ -112,12 +114,12 @@ Pautas importantes:
 
             # Convert Pydantic model to dictionary
             result = analysis_result.model_dump()
-            
+
             # Filter out results with less than 2 entries
             for model_name, brand_mentions in result.items():
                 if len(brand_mentions) < 2:
                     result[model_name] = []
-            
+
             return result
 
         except Exception as e:
@@ -126,12 +128,13 @@ Pautas importantes:
 
     def _fallback_analysis(self, responses: dict[str, str]) -> dict[str, list[dict[str, Any]]]:
         """Fallback analysis when GPT is not available.
-        
+
         Args:
             responses: dictionary of model responses
-            
+
         Returns:
             dictionary with empty brand mentions per model
+
         """
         result = {}
         for model_name in responses.keys():

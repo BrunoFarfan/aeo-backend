@@ -156,7 +156,7 @@ async def get_similar_questions(request: QueryRequest):
         # Convert to response format
         similar_results = []
         most_similar_processed_responses = None
-        
+
         for similar_query in similar_queries:
             similar_results.append(
                 SimilarQueryResult(
@@ -165,14 +165,17 @@ async def get_similar_questions(request: QueryRequest):
                     similarity_score=similar_query['similarity_score'],
                 )
             )
-            
+
             # Get the processed responses from the most similar question (first in the list)
             if most_similar_processed_responses is None and similar_query['processed_responses']:
                 try:
                     # Parse the JSON string back to dict if it's stored as string
                     if isinstance(similar_query['processed_responses'], str):
                         import json
-                        most_similar_processed_responses = json.loads(similar_query['processed_responses'])
+
+                        most_similar_processed_responses = json.loads(
+                            similar_query['processed_responses']
+                        )
                     else:
                         most_similar_processed_responses = similar_query['processed_responses']
                 except Exception as e:
@@ -181,7 +184,7 @@ async def get_similar_questions(request: QueryRequest):
 
         return SimilarQuestionsResponse(
             similar_previous_results=similar_results,
-            processed_responses=most_similar_processed_responses
+            processed_responses=most_similar_processed_responses,
         )
 
     except Exception as e:

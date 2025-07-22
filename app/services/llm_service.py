@@ -39,7 +39,7 @@ class LLMService:
                 'model': GOOGLE_MODEL,
                 'provider': GOOGLE_PROVIDER,
                 'api_key': self.google_api_key,
-                'fallback': lambda q: f"Gemini responde con: {q} - Aquí está mi respuesta simulada. Típicamente ofrecería insights desde mi comprensión multimodal y capacidades de razonamiento.",
+                'fallback': lambda q: f'Gemini responde con: {q} - Aquí está mi respuesta simulada. Típicamente ofrecería insights desde mi comprensión multimodal y capacidades de razonamiento.',
             },
             'perplexity': {
                 'model': PERPLEXITY_MODEL,
@@ -107,7 +107,7 @@ class LLMService:
                     '- URLs de fuentes externas\n\n'
                     'Proporciona al menos 8-12 opciones diferentes, priorizando negocios locales cuando se menciona una ubicación.',
                 )
-                
+
                 # Ensure we get a string response
                 if hasattr(response, 'content'):
                     response = response.content
@@ -115,7 +115,7 @@ class LLMService:
                     response = response.output
                 elif not isinstance(response, str):
                     response = str(response)
-                    
+
             except Exception as agent_error:
                 print(f'Agent error for {model_name}: {str(agent_error)}')
                 # Fallback to direct LLM call without agent
