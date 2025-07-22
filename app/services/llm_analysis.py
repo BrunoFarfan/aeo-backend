@@ -114,3 +114,17 @@ Important guidelines:
         except Exception as e:
             print(f'Error in LLM analysis: {e}')
             return self._fallback_analysis(responses)
+
+    def _fallback_analysis(self, responses: dict[str, str]) -> dict[str, list[dict[str, Any]]]:
+        """Fallback analysis when GPT is not available.
+        
+        Args:
+            responses: dictionary of model responses
+            
+        Returns:
+            dictionary with empty brand mentions per model
+        """
+        result = {}
+        for model_name in responses.keys():
+            result[model_name] = []
+        return result

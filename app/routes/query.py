@@ -3,10 +3,10 @@ from typing import Any, Dict, List
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
+from app.services.embedding_service import EmbeddingService
 from app.services.llm_analysis import LLMAnalysisService
 from app.services.llm_service import LLMService
 from app.services.pocketbase_service import PocketbaseService
-from app.services.embedding_service import EmbeddingService
 
 router = APIRouter()
 pocketbase_service = PocketbaseService()
@@ -103,7 +103,7 @@ async def handle_deep_query(request: QueryRequest):
             question_embedding=question_embedding,
             current_question=request.question,
             similarity_threshold=0.7,
-            limit=5
+            limit=5,
         )
 
         # Convert to response format
@@ -113,13 +113,12 @@ async def handle_deep_query(request: QueryRequest):
                 SimilarQueryResult(
                     question=similar_query['question'],
                     processed_responses=similar_query['processed_responses'],
-                    similarity_score=similar_query['similarity_score']
+                    similarity_score=similar_query['similarity_score'],
                 )
             )
 
         return DeepQueryResponse(
-            current_result=processed_responses,
-            similar_previous_results=similar_results
+            current_result=processed_responses, similar_previous_results=similar_results
         )
 
     except Exception as e:

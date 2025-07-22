@@ -1,9 +1,9 @@
 import json
-from typing import Any, Dict, Optional, List
+from typing import Any, Dict, List, Optional
 
+import numpy as np
 from decouple import config
 from pocketbase import PocketBase
-import numpy as np
 
 
 class PocketbaseService:
@@ -125,26 +125,26 @@ class PocketbaseService:
         try:
             vec1_array = np.array(vec1)
             vec2_array = np.array(vec2)
-            
+
             # Calculate cosine similarity
             dot_product = np.dot(vec1_array, vec2_array)
             norm1 = np.linalg.norm(vec1_array)
             norm2 = np.linalg.norm(vec2_array)
-            
+
             if norm1 == 0 or norm2 == 0:
                 return 0.0
-                
+
             return dot_product / (norm1 * norm2)
         except Exception as e:
             print(f'Error calculating cosine similarity: {str(e)}')
             return 0.0
 
     async def find_similar_queries(
-        self, 
-        question_embedding: List[float], 
+        self,
+        question_embedding: List[float],
         current_question: str,
         similarity_threshold: float = 0.7,
-        limit: int = 1000
+        limit: int = 1000,
     ) -> List[Dict[str, Any]]:
         """Find similar queries based on embedding similarity.
 
@@ -161,44 +161,58 @@ class PocketbaseService:
         try:
             # Get all queries from Pocketbase
             records = self.client.collection('queries').get_list(page=1, per_page=1000)
-            
+
             similar_queries = []
-            
+
             for record in records.items:
                 # Skip the current question
                 if record.question == current_question:
                     continue
-                
+
                 # Check if record has embedding
                 if hasattr(record, 'question_embedding') and record.question_embedding:
                     try:
-                        stored_embedding = json.loads(record.question_embedding)
-                        
+                        # Handle both string and list formats for embedding
+                        if isinstance(record.question_embedding, str):
+                            stored_embedding = json.loads(record.question_embedding)
+                        elif isinstance(record.question_embedding, list):
+                            stored_embedding = record.question_embedding
+                        else:
+                            continue
+
                         # Calculate similarity
                         similarity = self.cosine_similarity(question_embedding, stored_embedding)
-                        
+
                         if similarity >= similarity_threshold:
                             # Parse processed_responses if available
                             processed_responses = None
-                            if hasattr(record, 'processed_responses') and record.processed_responses:
+                            if (
+                                hasattr(record, 'processed_responses')
+                                and record.processed_responses
+                            ):
                                 try:
-                                    processed_responses = json.loads(record.processed_responses)
+                                    if isinstance(record.processed_responses, str):
+                                        processed_responses = json.loads(record.processed_responses)
+                                    else:
+                                        processed_responses = record.processed_responses
                                 except:
                                     pass
-                            
-                            similar_queries.append({
-                                'question': record.question,
-                                'processed_responses': processed_responses,
-                                'similarity_score': similarity
-                            })
+
+                            similar_queries.append(
+                                {
+                                    'question': record.question,
+                                    'processed_responses': processed_responses,
+                                    'similarity_score': similarity,
+                                }
+                            )
                     except Exception as e:
                         print(f'Error processing record {record.id}: {str(e)}')
                         continue
-            
+
             # Sort by similarity score (highest first) and limit results
             similar_queries.sort(key=lambda x: x['similarity_score'], reverse=True)
             return similar_queries[:limit]
-            
+
         except Exception as e:
             print(f'Error finding similar queries: {str(e)}')
             return []

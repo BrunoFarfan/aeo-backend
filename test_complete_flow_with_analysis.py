@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""Test script to verify the complete flow with LLM analysis.
-"""
+"""Test script to verify the complete flow with LLM analysis."""
 
 import asyncio
 import os
@@ -23,9 +22,7 @@ async def test_complete_flow():
     analysis_service = LLMAnalysisService()
     pocketbase_service = PocketbaseService()
 
-    test_question = (
-        'Como cotizar un seguro vehicular en Chile?'
-    )
+    test_question = 'Como cotizar un seguro vehicular en Chile?'
 
     print('🧪 Testing Complete Flow with Analysis...')
     print(f'📝 Question: {test_question}')
