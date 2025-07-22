@@ -145,6 +145,7 @@ class PocketbaseService:
         current_question: str,
         similarity_threshold: float = 0.7,
         limit: int = 1000,
+        exclude_exact_match: bool = False,
     ) -> List[Dict[str, Any]]:
         """Find similar queries based on embedding similarity.
 
@@ -153,6 +154,7 @@ class PocketbaseService:
             current_question: The current question text (to exclude from results)
             similarity_threshold: Minimum similarity score to include
             limit: Maximum number of similar queries to return
+            exclude_exact_match: Whether to exclude the exact same question
 
         Returns:
             List of similar query records with similarity scores
@@ -165,8 +167,8 @@ class PocketbaseService:
             similar_queries = []
 
             for record in records.items:
-                # Skip the current question
-                if record.question == current_question:
+                # Skip the current question if exclude_exact_match is True
+                if exclude_exact_match and record.question == current_question:
                     continue
 
                 # Check if record has embedding

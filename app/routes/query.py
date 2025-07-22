@@ -103,12 +103,13 @@ async def handle_deep_query(request: QueryRequest):
             question_embedding=question_embedding,
         )
 
-        # Find similar previous queries
+        # Find similar previous queries (exclude exact matches when saving new queries)
         similar_queries = await pocketbase_service.find_similar_queries(
             question_embedding=question_embedding,
             current_question=request.question,
             similarity_threshold=0.75,
             limit=5,
+            exclude_exact_match=False,
         )
 
         # Convert to response format
@@ -145,13 +146,25 @@ async def get_similar_questions(request: QueryRequest):
         # Generate embedding for the question
         question_embedding = await embedding_service.get_embedding(request.question)
 
-        # Find similar previous queries
+        # Find similar previous queries (including exact matches)
         similar_queries = await pocketbase_service.find_similar_queries(
             question_embedding=question_embedding,
             current_question=request.question,
             similarity_threshold=0.75,
             limit=5,
+            exclude_exact_match=False,
         )
+
+        # Check if no similar questions were found
+        if not similar_queries:
+            raise HTTPException(
+                status_code=404,
+                detail='No similar questions found in the database. This could be because: '
+                '1) No previous questions exist in the database, '
+                '2) No questions meet the similarity threshold (0.75), '
+                '3) No questions have embeddings stored. '
+                'Try asking a new question or lowering the similarity threshold.',
+            )
 
         # Convert to response format
         similar_results = []
@@ -187,5 +200,8 @@ async def get_similar_questions(request: QueryRequest):
             processed_responses=most_similar_processed_responses,
         )
 
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f'Internal server error: {str(e)}')

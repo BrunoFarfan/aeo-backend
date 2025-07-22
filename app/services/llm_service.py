@@ -4,7 +4,7 @@ from typing import Dict
 from decouple import config
 from langchain.agents import initialize_agent
 from langchain.chat_models import init_chat_model
-from langchain_community.tools import DuckDuckGoSearchResults
+from langchain_google_community import GoogleSearchAPIWrapper, GoogleSearchResults
 
 # Model and provider constants
 OPENAI_MODEL = 'gpt-4o-mini'
@@ -24,8 +24,23 @@ class LLMService:
         self.google_api_key = config('GOOGLE_API_KEY', default=None)
         self.perplexity_api_key = config('PERPLEXITY_API_KEY', default=None)
 
-        # Initialize search tool
-        self.search_tool = DuckDuckGoSearchResults(output_format='list')
+        # Initialize search tool with Google API key and CSE ID
+        google_api_key = config('GOOGLE_API_KEY', default=None)
+        google_cse_id = config('GOOGLE_CSE_ID', default=None)
+        if google_api_key and google_cse_id:
+            try:
+                api_wrapper = GoogleSearchAPIWrapper(
+                    google_api_key=google_api_key, google_cse_id=google_cse_id
+                )
+                self.search_tool = GoogleSearchResults(api_wrapper=api_wrapper, num_results=10)
+                print('Google Search API initialized successfully')
+            except Exception as e:
+                print(f'Failed to initialize Google Search API: {str(e)}')
+                print('Falling back to direct LLM calls without web search')
+                self.search_tool = None
+        else:
+            print('Google Search API not initialized')
+            self.search_tool = None
 
         # Model configurations
         self.model_configs = {
