@@ -11,8 +11,8 @@ OPENAI_MODEL = 'gpt-4o-mini'
 OPENAI_PROVIDER = 'openai'
 ANTHROPIC_MODEL = 'claude-3-sonnet-20240229'
 ANTHROPIC_PROVIDER = 'anthropic'
-GOOGLE_MODEL = 'gemini-pro'
-GOOGLE_PROVIDER = 'google'
+GOOGLE_MODEL = 'gemini-2.0-flash'
+GOOGLE_PROVIDER = 'google_genai'
 PERPLEXITY_MODEL = 'llama-3.1-8b-instruct'
 PERPLEXITY_PROVIDER = 'perplexity'
 
@@ -21,7 +21,7 @@ class LLMService:
     def __init__(self):
         self.openai_api_key = config('OPENAI_API_KEY', default=None)
         self.anthropic_api_key = config('ANTHROPIC_API_KEY', default=None)
-        self.google_api_key = config('GOOGLE_API_KEY', default=None)
+        self.gemini_api_key = config('GOOGLE_API_KEY', default=None)
         self.perplexity_api_key = config('PERPLEXITY_API_KEY', default=None)
 
         # Initialize search tool with Google API key and CSE ID
@@ -47,24 +47,28 @@ class LLMService:
             'claude': {
                 'model': ANTHROPIC_MODEL,
                 'provider': ANTHROPIC_PROVIDER,
+                'api_key_name': 'anthropic_api_key',
                 'api_key': self.anthropic_api_key,
                 'fallback': lambda q: f'Claude dice sobre {q}: Esta es una respuesta simulada de Claude. En un escenario real, proporcionaría un análisis detallado basado en mis datos de entrenamiento y capacidades de razonamiento.',
             },
             'gemini': {
                 'model': GOOGLE_MODEL,
                 'provider': GOOGLE_PROVIDER,
-                'api_key': self.google_api_key,
+                'api_key_name': 'google_api_key',
+                'api_key': self.gemini_api_key,
                 'fallback': lambda q: f'Gemini responde con: {q} - Aquí está mi respuesta simulada. Típicamente ofrecería insights desde mi comprensión multimodal y capacidades de razonamiento.',
             },
             'perplexity': {
                 'model': PERPLEXITY_MODEL,
                 'provider': PERPLEXITY_PROVIDER,
+                'api_key_name': 'perplexity_api_key',
                 'api_key': self.perplexity_api_key,
                 'fallback': lambda q: f'Según Perplexity: {q} - Esta es una respuesta simulada. En la práctica, buscaría en la web y proporcionaría información actualizada en tiempo real con citaciones.',
             },
             'gpt': {
                 'model': OPENAI_MODEL,
                 'provider': OPENAI_PROVIDER,
+                'api_key_name': 'openai_api_key',
                 'api_key': self.openai_api_key,
                 'fallback': lambda q: 'Clave API de OpenAI no configurada. Por favor configura OPENAI_API_KEY en tu archivo .env.',
             },
@@ -94,7 +98,7 @@ class LLMService:
             llm = init_chat_model(
                 model=config['model'],
                 model_provider=config['provider'],
-                **{f'{config["provider"]}_api_key': config['api_key']},
+                **{config["api_key_name"]: config['api_key']},
                 temperature=0.7,
             )
 
@@ -109,18 +113,21 @@ class LLMService:
                 early_stopping_method='generate',
             )
 
-            # Get response with search
+            # Get response with search (with timeout)
             try:
-                response = await asyncio.to_thread(
-                    agent.run,
-                    f'Busca en la web y proporciona una lista completa de recomendaciones para: {question}\n\n'
-                    'Formatea tu respuesta como una lista numerada con:\n'
-                    '- Nombres exactos de lugares/marcas/empresas\n'
-                    '- Descripciones breves (2-3 oraciones) con tu valoración\n'
-                    '- Características y beneficios clave\n'
-                    '- Información de calificaciones/reseñas\n'
-                    '- URLs de fuentes externas\n\n'
-                    'TU RESULTADO FINAL SIEMPRE DEBE CONTENER ESTA LISTA',
+                response = await asyncio.wait_for(
+                    asyncio.to_thread(
+                        agent.run,
+                        f'Busca en la web y proporciona una lista completa de recomendaciones para: {question}\n\n'
+                        'Formatea tu respuesta como una lista numerada con:\n'
+                        '- Nombres exactos de lugares/marcas/empresas\n'
+                        '- Descripciones breves (2-3 oraciones) con tu valoración\n'
+                        '- Características y beneficios clave\n'
+                        '- Información de calificaciones/reseñas\n'
+                        '- URLs de fuentes externas\n\n'
+                        'TU RESULTADO FINAL SIEMPRE DEBE CONTENER ESTA LISTA',
+                    ),
+                    timeout=45  # 45 second timeout
                 )
 
                 # Ensure we get a string response
@@ -131,14 +138,20 @@ class LLMService:
                 elif not isinstance(response, str):
                     response = str(response)
 
+            except asyncio.TimeoutError:
+                print(f'Timeout error for {model_name} agent execution')
+                response = config['fallback'](question)
             except Exception as agent_error:
                 print(f'Agent error for {model_name}: {str(agent_error)}')
                 # Fallback to direct LLM call without agent
                 try:
-                    response = await asyncio.to_thread(
-                        llm.invoke,
-                        f'Por favor busca en la web y proporciona una lista completa de recomendaciones para esta '
-                        f'pregunta: {question}. Proporciona una respuesta detallada con recomendaciones.',
+                    response = await asyncio.wait_for(
+                        asyncio.to_thread(
+                            llm.invoke,
+                            f'Por favor busca en la web y proporciona una lista completa de recomendaciones para esta '
+                            f'pregunta: {question}. Proporciona una respuesta detallada con recomendaciones.',
+                        ),
+                        timeout=30  # 30 second timeout
                     )
                     if hasattr(response, 'content'):
                         response = response.content
@@ -146,6 +159,9 @@ class LLMService:
                         response = response.output
                     elif not isinstance(response, str):
                         response = str(response)
+                except asyncio.TimeoutError:
+                    print(f'Timeout error for {model_name} fallback execution')
+                    response = config['fallback'](question)
                 except Exception as fallback_error:
                     print(f'Fallback error for {model_name}: {str(fallback_error)}')
                     response = config['fallback'](question)

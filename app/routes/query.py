@@ -1,4 +1,5 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
+from datetime import datetime
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -30,6 +31,7 @@ class SimilarQueryResult(BaseModel):
     question: str
     processed_responses: Dict[str, Any]
     similarity_score: float
+    created_at: Optional[datetime] = None
 
 
 class DeepQueryResponse(BaseModel):
@@ -120,6 +122,7 @@ async def handle_deep_query(request: QueryRequest):
                     question=similar_query['question'],
                     processed_responses=similar_query['processed_responses'],
                     similarity_score=similar_query['similarity_score'],
+                    created_at=similar_query['created_at'],
                 )
             )
 
@@ -176,6 +179,7 @@ async def get_similar_questions(request: QueryRequest):
                     question=similar_query['question'],
                     processed_responses=similar_query['processed_responses'],
                     similarity_score=similar_query['similarity_score'],
+                    created_at=similar_query['created_at'],
                 )
             )
 
