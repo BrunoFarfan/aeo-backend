@@ -33,25 +33,25 @@ class LLMService:
                 'model': ANTHROPIC_MODEL,
                 'provider': ANTHROPIC_PROVIDER,
                 'api_key': self.anthropic_api_key,
-                'fallback': lambda q: f'Claude says about {q}: This is a simulated response from Claude. In a real scenario, I would provide a detailed analysis based on my training data and reasoning capabilities.',
+                'fallback': lambda q: f'Claude dice sobre {q}: Esta es una respuesta simulada de Claude. En un escenario real, proporcionaría un análisis detallado basado en mis datos de entrenamiento y capacidades de razonamiento.',
             },
             'gemini': {
                 'model': GOOGLE_MODEL,
                 'provider': GOOGLE_PROVIDER,
                 'api_key': self.google_api_key,
-                'fallback': lambda q: f"Gemini answers with: {q} - Here's my simulated response. I would typically offer insights from my multimodal understanding and reasoning abilities.",
+                'fallback': lambda q: f"Gemini responde con: {q} - Aquí está mi respuesta simulada. Típicamente ofrecería insights desde mi comprensión multimodal y capacidades de razonamiento.",
             },
             'perplexity': {
                 'model': PERPLEXITY_MODEL,
                 'provider': PERPLEXITY_PROVIDER,
                 'api_key': self.perplexity_api_key,
-                'fallback': lambda q: f'According to Perplexity: {q} - This is a simulated response. In practice, I would search the web and provide real-time, up-to-date information with citations.',
+                'fallback': lambda q: f'Según Perplexity: {q} - Esta es una respuesta simulada. En la práctica, buscaría en la web y proporcionaría información actualizada en tiempo real con citaciones.',
             },
             'gpt': {
                 'model': OPENAI_MODEL,
                 'provider': OPENAI_PROVIDER,
                 'api_key': self.openai_api_key,
-                'fallback': lambda q: 'OpenAI API key not configured. Please set OPENAI_API_KEY in your .env file.',
+                'fallback': lambda q: 'Clave API de OpenAI no configurada. Por favor configura OPENAI_API_KEY en tu archivo .env.',
             },
         }
 
@@ -89,8 +89,8 @@ class LLMService:
                 llm=llm,
                 verbose=True,
                 handle_parsing_errors=True,
-                max_iterations=3,  # Reduced from 5 to prevent loops
-                max_execution_time=60,  # Increased timeout
+                max_iterations=10,
+                max_execution_time=60,
                 early_stopping_method='generate',
             )
 
@@ -98,14 +98,14 @@ class LLMService:
             try:
                 response = await asyncio.to_thread(
                     agent.run,
-                    f'Search the web and provide a comprehensive list of recommendations for: {question}\n\n'
-                    'Format your response as a numbered list with:\n'
-                    '- Exact names of places/brands/companies\n'
-                    '- Brief descriptions (2-3 sentences)\n'
-                    '- Key features and benefits\n'
-                    '- Ratings/reviews information\n'
-                    '- Source URLs from external websites\n\n'
-                    'Provide at least 8-12 different options, prioritizing local businesses when location is mentioned.',
+                    f'Busca en la web y proporciona una lista completa de recomendaciones para: {question}\n\n'
+                    'Formatea tu respuesta como una lista numerada con:\n'
+                    '- Nombres exactos de lugares/marcas/empresas\n'
+                    '- Descripciones breves (2-3 oraciones)\n'
+                    '- Características y beneficios clave\n'
+                    '- Información de calificaciones/reseñas\n'
+                    '- URLs de fuentes externas\n\n'
+                    'Proporciona al menos 8-12 opciones diferentes, priorizando negocios locales cuando se menciona una ubicación.',
                 )
                 
                 # Ensure we get a string response
@@ -122,8 +122,8 @@ class LLMService:
                 try:
                     response = await asyncio.to_thread(
                         llm.invoke,
-                        f'Please search the web and provide a comprehensive list of recommendations for this '
-                        f'question: {question}. Provide a detailed response with recommendations.',
+                        f'Por favor busca en la web y proporciona una lista completa de recomendaciones para esta '
+                        f'pregunta: {question}. Proporciona una respuesta detallada con recomendaciones.',
                     )
                     if hasattr(response, 'content'):
                         response = response.content

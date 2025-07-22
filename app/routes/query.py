@@ -37,6 +37,11 @@ class DeepQueryResponse(BaseModel):
     similar_previous_results: List[SimilarQueryResult]
 
 
+class SimilarQuestionsResponse(BaseModel):
+    similar_previous_results: List[SimilarQueryResult]
+    processed_responses: Dict[str, Any] = None
+
+
 @router.post('/query', response_model=QueryResponse)
 async def handle_query(request: QueryRequest):
     """Handle a query request and return a response with simulated LLM responses.
@@ -102,7 +107,7 @@ async def handle_deep_query(request: QueryRequest):
         similar_queries = await pocketbase_service.find_similar_queries(
             question_embedding=question_embedding,
             current_question=request.question,
-            similarity_threshold=0.7,
+            similarity_threshold=0.75,
             limit=5,
         )
 
@@ -119,6 +124,64 @@ async def handle_deep_query(request: QueryRequest):
 
         return DeepQueryResponse(
             current_result=processed_responses, similar_previous_results=similar_results
+        )
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f'Internal server error: {str(e)}')
+
+
+@router.post('/similar_questions', response_model=SimilarQuestionsResponse)
+async def get_similar_questions(request: QueryRequest):
+    """Retrieve similar past questions from Pocketbase without making new LLM calls.
+
+    Args:
+        request: The query request containing a question
+
+    Returns:
+        SimilarQuestionsResponse: The response with similar previous results
+
+    """
+    try:
+        # Generate embedding for the question
+        question_embedding = await embedding_service.get_embedding(request.question)
+
+        # Find similar previous queries
+        similar_queries = await pocketbase_service.find_similar_queries(
+            question_embedding=question_embedding,
+            current_question=request.question,
+            similarity_threshold=0.75,
+            limit=5,
+        )
+
+        # Convert to response format
+        similar_results = []
+        most_similar_processed_responses = None
+        
+        for similar_query in similar_queries:
+            similar_results.append(
+                SimilarQueryResult(
+                    question=similar_query['question'],
+                    processed_responses=similar_query['processed_responses'],
+                    similarity_score=similar_query['similarity_score'],
+                )
+            )
+            
+            # Get the processed responses from the most similar question (first in the list)
+            if most_similar_processed_responses is None and similar_query['processed_responses']:
+                try:
+                    # Parse the JSON string back to dict if it's stored as string
+                    if isinstance(similar_query['processed_responses'], str):
+                        import json
+                        most_similar_processed_responses = json.loads(similar_query['processed_responses'])
+                    else:
+                        most_similar_processed_responses = similar_query['processed_responses']
+                except Exception as e:
+                    print(f'Error parsing processed responses: {str(e)}')
+                    most_similar_processed_responses = {}
+
+        return SimilarQuestionsResponse(
+            similar_previous_results=similar_results,
+            processed_responses=most_similar_processed_responses
         )
 
     except Exception as e:

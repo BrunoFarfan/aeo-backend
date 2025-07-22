@@ -8,12 +8,12 @@ from pydantic import BaseModel, Field
 class BrandMention(BaseModel):
     """Model for a single brand mention."""
 
-    brand: str = Field(description='The exact brand name as mentioned')
+    brand: str = Field(description='El nombre exacto de la marca como se menciona')
     position: int = Field(
-        description='The order in which it appears in the text (1 for first mention, 2 for second, etc.)'
+        description='El orden en que aparece en el texto (1 para primera mención, 2 para segunda, etc.)'
     )
-    sentiment: float = Field(description='Sentiment score from -1 to 1', ge=-1.0, le=1.0)
-    link_count: int = Field(description='Number of URLs/links found in the text', ge=0)
+    sentiment: float = Field(description='Puntuación de sentimiento de -1 a 1', ge=-1.0, le=1.0)
+    link_count: int = Field(description='Número de URLs/enlaces encontrados en el texto', ge=0)
 
 
 class ModelAnalysis(BaseModel):
@@ -37,27 +37,29 @@ class LLMAnalysisService:
         )
 
         return f"""
-Please analyze the following LLM responses and extract ONLY the brands that are being compared or ranked in the context of the answer. For each brand mention, provide:
+Por favor analiza las siguientes respuestas de LLM y extrae ÚNICAMENTE las marcas que están siendo comparadas o rankeadas en el contexto de la respuesta. Para cada mención de marca, proporciona:
 
-1. **brand**: The exact brand name as mentioned
-2. **position**: The order in which it appears in the text (1 for first mention, 2 for second, etc.)
-3. **sentiment**: A score from -1 (worst) to 1 (best) on the valuation the answer gives on the entry
-4. **link_count**: Number of URLs/links found in the reference to that specific entry
-CRITICAL INSTRUCTIONS FOR BRAND EXTRACTION:
-- Focus on the PRIMARY category being compared/ranked
-- Ignore secondary or supporting brands that are not part of the main comparison
-- Only include brands that are explicitly mentioned as options, recommendations, or alternatives
+1. **brand**: El nombre exacto de la marca como se menciona
+2. **position**: El orden en que aparece en el texto (1 para primera mención, 2 para segunda, etc.)
+3. **sentiment**: Una puntuación de -1 (peor) a 1 (mejor) sobre la valoración que la respuesta da a la entrada
+4. **link_count**: Número de URLs/enlaces encontrados en la referencia a esa entrada específica
+INSTRUCCIONES CRÍTICAS PARA EXTRACCIÓN DE MARCAS:
+- Enfócate en la categoría PRINCIPAL que se está comparando/rankeando
+- Ignora marcas secundarias o de apoyo que no son parte de la comparación principal
+- Solo incluye marcas que se mencionan explícitamente como opciones, recomendaciones o alternativas
+- IMPORTANTE: Si encuentras MENOS DE 2 marcas/entradas en el ranking, considera el resultado como vacío y devuelve un array vacío
 
-Here are the responses to analyze:
+Aquí están las respuestas a analizar:
 
 {responses_text}
 
-Important guidelines:
-- Extract ONLY relevant brands for the comparison being made
-- Maintain the exact order of appearance for position
-- Be conservative with sentiment scoring - default to 0.0 if unclear
-- Count actual URLs (http/https) for link_count
-- If no relevant brands are found for a model, return an empty array
+Pautas importantes:
+- Extrae ÚNICAMENTE marcas relevantes para la comparación que se está haciendo
+- Mantén el orden exacto de aparición para position
+- Sé conservador con la puntuación de sentimiento - usa 0.0 por defecto si no está claro
+- Cuenta URLs reales (http/https) para link_count
+- Si no se encuentran marcas relevantes para un modelo, devuelve un array vacío
+- Si se encuentran MENOS DE 2 entradas en el ranking, devuelve un array vacío
 """
 
     def _create_dynamic_model(self, model_names: list[str]) -> type:
@@ -69,7 +71,7 @@ Important guidelines:
         for model_name in model_names:
             fields[model_name] = (
                 list[BrandMention],
-                Field(description=f"Brand mentions found in {model_name}'s response"),
+                Field(description=f"Menciones de marcas encontradas en la respuesta de {model_name}"),
             )
 
         # Create the dynamic model
@@ -109,7 +111,14 @@ Important guidelines:
             analysis_result = await model.ainvoke(prompt)
 
             # Convert Pydantic model to dictionary
-            return analysis_result.model_dump()
+            result = analysis_result.model_dump()
+            
+            # Filter out results with less than 2 entries
+            for model_name, brand_mentions in result.items():
+                if len(brand_mentions) < 2:
+                    result[model_name] = []
+            
+            return result
 
         except Exception as e:
             print(f'Error in LLM analysis: {e}')
