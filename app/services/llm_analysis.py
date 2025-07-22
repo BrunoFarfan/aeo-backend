@@ -12,7 +12,7 @@ class BrandMention(BaseModel):
     position: int = Field(
         description='El orden en que aparece en el texto (1 para primera mención, 2 para segunda, etc.)'
     )
-    sentiment: float = Field(description='Puntuación de sentimiento de -1 a 1', ge=-1.0, le=1.0)
+    sentiment: float = Field(description='Puntuación de sentimiento de -1 a 1', ge=0, le=1.0)
     link_count: int = Field(description='Número de URLs/enlaces encontrados en el texto', ge=0)
 
 
@@ -39,15 +39,30 @@ class LLMAnalysisService:
         return f"""
 Por favor analiza las siguientes respuestas de LLM y extrae ÚNICAMENTE las marcas que están siendo comparadas o rankeadas en el contexto de la respuesta. Para cada mención de marca, proporciona:
 
-1. **brand**: El nombre exacto de la marca como se menciona
+1. **brand**: El nombre SIMPLIFICADO de la marca (solo la parte principal del nombre, sin descripciones adicionales)
 2. **position**: El orden en que aparece en el texto (1 para primera mención, 2 para segunda, etc.)
-3. **sentiment**: Una puntuación de -1 (peor) a 1 (mejor) sobre la valoración que la respuesta da a la entrada
+3. **sentiment**: Una puntuación de 0 (peor) a 1 (mejor) sobre la valoración que la respuesta da a la entrada
 4. **link_count**: Número de URLs/enlaces encontrados en la referencia a esa entrada específica
-INSTRUCCIONES CRÍTICAS PARA EXTRACCIÓN DE MARCAS:
+
+INSTRUCCIONES CRÍTICAS PARA EXTRACCIÓN Y SIMPLIFICACIÓN DE MARCAS:
 - Enfócate en la categoría PRINCIPAL que se está comparando/rankeando
 - Ignora marcas secundarias o de apoyo que no son parte de la comparación principal
 - Solo incluye marcas que se mencionan explícitamente como opciones, recomendaciones o alternativas
 - IMPORTANTE: Si encuentras MENOS DE 2 marcas/entradas en el ranking, considera el resultado como vacío y devuelve un array vacío
+
+REGLAS DE SIMPLIFICACIÓN DE NOMBRES DE MARCA:
+- Extrae SOLO la parte principal del nombre de la marca
+- Elimina descripciones adicionales, ubicaciones, eslóganes o información secundaria
+- Ejemplos de simplificación:
+  * "HDI Seguros" → "HDI"
+  * "Metlife Chile" → "Metlife"
+  * "Dr Pet | Todo por tu mascota" → "Dr Pet"
+  * "Agrupet - Clínica Veterinaria En Ñuñoa" → "Agrupet"
+  * "Banco de Chile" → "Banco de Chile" (mantener si es parte del nombre oficial)
+  * "Falabella" → "Falabella" (ya está simplificado)
+  * "Cencosud" → "Cencosud" (ya está simplificado)
+- Mantén solo la parte del nombre que identifica únicamente a la marca
+- Si hay ambigüedad, mantén el nombre más corto que sea claramente identificable
 
 Aquí están las respuestas a analizar:
 
@@ -55,6 +70,7 @@ Aquí están las respuestas a analizar:
 
 Pautas importantes:
 - Extrae ÚNICAMENTE marcas relevantes para la comparación que se está haciendo
+- SIMPLIFICA los nombres de marca según las reglas establecidas
 - Mantén el orden exacto de aparición para position
 - Sé conservador con la puntuación de sentimiento - usa 0.0 por defecto si no está claro
 - Cuenta URLs reales (http/https) para link_count

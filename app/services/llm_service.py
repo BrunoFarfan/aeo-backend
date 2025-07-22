@@ -116,11 +116,11 @@ class LLMService:
                     f'Busca en la web y proporciona una lista completa de recomendaciones para: {question}\n\n'
                     'Formatea tu respuesta como una lista numerada con:\n'
                     '- Nombres exactos de lugares/marcas/empresas\n'
-                    '- Descripciones breves (2-3 oraciones)\n'
+                    '- Descripciones breves (2-3 oraciones) con tu valoración\n'
                     '- Características y beneficios clave\n'
                     '- Información de calificaciones/reseñas\n'
                     '- URLs de fuentes externas\n\n'
-                    'Proporciona al menos 8-12 opciones diferentes, priorizando negocios locales cuando se menciona una ubicación.',
+                    'TU RESULTADO FINAL SIEMPRE DEBE CONTENER ESTA LISTA',
                 )
 
                 # Ensure we get a string response
