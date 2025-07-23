@@ -63,6 +63,7 @@ REGLAS DE SIMPLIFICACIÓN DE NOMBRES DE MARCA:
   * "Cencosud" → "Cencosud" (ya está simplificado)
 - Mantén solo la parte del nombre que identifica únicamente a la marca
 - Si hay ambigüedad, mantén el nombre más corto que sea claramente identificable
+- Todos los nombres deben ser consistentes entre las respuestas de los modelos
 
 Aquí están las respuestas a analizar:
 
@@ -72,7 +73,7 @@ Pautas importantes:
 - Extrae ÚNICAMENTE marcas relevantes para la comparación que se está haciendo
 - SIMPLIFICA los nombres de marca según las reglas establecidas
 - Mantén el orden exacto de aparición para position
-- Sé conservador con la puntuación de sentimiento - usa 0.0 por defecto si no está claro
+- Sé conservador con la puntuación de sentimiento - usa 0.5 por defecto si no está claro
 - Cuenta URLs reales (http/https) para link_count
 - Si no se encuentran marcas relevantes para un modelo, devuelve un array vacío
 - Si se encuentran MENOS DE 2 entradas en el ranking, devuelve un array vacío
