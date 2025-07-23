@@ -108,8 +108,8 @@ class LLMService:
                 llm=llm,
                 verbose=True,
                 handle_parsing_errors=True,
-                max_iterations=10,
-                max_execution_time=60,
+                max_iterations=5,
+                max_execution_time=120,
                 early_stopping_method='generate',
             )
 
@@ -127,7 +127,7 @@ class LLMService:
                         '- URLs de fuentes externas\n\n'
                         'TU RESULTADO FINAL SIEMPRE DEBE CONTENER ESTA LISTA',
                     ),
-                    timeout=45,  # 45 second timeout
+                    timeout=120,
                 )
 
                 # Ensure we get a string response
@@ -138,9 +138,8 @@ class LLMService:
                 elif not isinstance(response, str):
                     response = str(response)
 
-            except asyncio.TimeoutError:
-                print(f'Timeout error for {model_name} agent execution')
-                response = config['fallback'](question)
+            except asyncio.TimeoutError as e:
+                response = f'Timeout error for {model_name} agent execution: {str(e)}'
             except Exception as agent_error:
                 print(f'Agent error for {model_name}: {str(agent_error)}')
                 # Fallback to direct LLM call without agent
@@ -159,18 +158,15 @@ class LLMService:
                         response = response.output
                     elif not isinstance(response, str):
                         response = str(response)
-                except asyncio.TimeoutError:
-                    print(f'Timeout error for {model_name} fallback execution')
-                    response = config['fallback'](question)
+                except asyncio.TimeoutError as e:
+                    response = f'Timeout error for {model_name} fallback execution: {str(e)}'
                 except Exception as fallback_error:
-                    print(f'Fallback error for {model_name}: {str(fallback_error)}')
-                    response = config['fallback'](question)
+                    response = f'Fallback error for {model_name}: {str(fallback_error)}'
 
             return response
 
         except Exception as e:
-            print(f'Error with {model_name}: {str(e)}')
-            return config['fallback'](question)
+            return f'Error with {model_name}: {str(e)}'
 
     # Convenience methods for backward compatibility
     async def get_claude_response(self, question: str) -> str:
