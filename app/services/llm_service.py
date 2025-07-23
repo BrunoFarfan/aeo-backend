@@ -98,7 +98,7 @@ class LLMService:
             llm = init_chat_model(
                 model=config['model'],
                 model_provider=config['provider'],
-                **{config["api_key_name"]: config['api_key']},
+                **{config['api_key_name']: config['api_key']},
                 temperature=0.7,
             )
 
@@ -127,7 +127,7 @@ class LLMService:
                         '- URLs de fuentes externas\n\n'
                         'TU RESULTADO FINAL SIEMPRE DEBE CONTENER ESTA LISTA',
                     ),
-                    timeout=45  # 45 second timeout
+                    timeout=45,  # 45 second timeout
                 )
 
                 # Ensure we get a string response
@@ -151,7 +151,7 @@ class LLMService:
                             f'Por favor busca en la web y proporciona una lista completa de recomendaciones para esta '
                             f'pregunta: {question}. Proporciona una respuesta detallada con recomendaciones.',
                         ),
-                        timeout=30  # 30 second timeout
+                        timeout=30,  # 30 second timeout
                     )
                     if hasattr(response, 'content'):
                         response = response.content

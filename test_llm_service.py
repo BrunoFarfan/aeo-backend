@@ -58,6 +58,7 @@ async def test_llm_service():
     except Exception as e:
         print(f'❌ Error during testing: {str(e)}')
         import traceback
+
         traceback.print_exc()
 
 

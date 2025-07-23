@@ -203,15 +203,19 @@ class PocketbaseService:
                             # Handle created_at field safely
                             created_at = None
                             if hasattr(record, 'created'):
-                                print(f"Record created field: {record.created}, type: {type(record.created)}")
+                                print(
+                                    f'Record created field: {record.created}, type: {type(record.created)}'
+                                )
                                 if hasattr(record.created, 'isoformat'):
                                     created_at = record.created
                                 else:
                                     created_at = str(record.created)
                             else:
-                                print(f"Record has no 'created' field. Available fields: {dir(record)}")
+                                print(
+                                    f"Record has no 'created' field. Available fields: {dir(record)}"
+                                )
                                 created_at = None
-                            
+
                             similar_queries.append(
                                 {
                                     'question': record.question,
